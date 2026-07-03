@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>EARTHSONG — live geophysical music</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0D13; --panel:#12182466; --panel-solid:#121824;
+  --line:rgba(232,228,218,.08);
+  --text:#E8E4DA; --dim:#8B93A3;
+  --seis:#D99A45; --solar:#86C7D8; --quake:#E27B86;
+  --good:#7FBF8E; --bad:#C96A6A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ink); color:var(--text);
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:13px; line-height:1.5;
+  min-height:100vh; padding-bottom:60px;
+  background-image:radial-gradient(ellipse 120% 60% at 50% -10%, #16203300 0%, transparent 70%),
+                   radial-gradient(ellipse 80% 40% at 50% 0%, rgba(134,199,216,.05), transparent 60%);
+}
+header{
+  padding:26px 18px 14px; display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+  max-width:760px; margin:0 auto;
+}
+h1{
+  font-family:'Instrument Serif',serif; font-weight:400;
+  font-size:clamp(34px,9vw,52px); letter-spacing:.01em; line-height:.95;
+}
+h1 em{font-style:italic; color:var(--solar)}
+.sub{color:var(--dim); font-size:11px; margin-top:6px; max-width:34ch}
+#play{
+  flex:none; width:76px; height:76px; border-radius:50%;
+  border:1px solid var(--line); background:var(--panel-solid);
+  color:var(--text); cursor:pointer; position:relative;
+  display:grid; place-items:center; transition:box-shadow .4s, border-color .4s;
+  -webkit-tap-highlight-color:transparent;
+}
+#play:focus-visible{outline:2px solid var(--solar); outline-offset:3px}
+#play svg{width:26px;height:26px;fill:var(--text)}
+#play.on{border-color:var(--seis); box-shadow:0 0 34px rgba(217,154,69,.28), inset 0 0 18px rgba(217,154,69,.12)}
+#play .ring{position:absolute; inset:-1px; border-radius:50%; border:1px solid var(--seis); opacity:0; pointer-events:none}
+#play.on .ring{animation:pulse 3s ease-out infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.55);opacity:0}}
+@media (prefers-reduced-motion: reduce){#play.on .ring{animation:none}}
+main{max-width:760px; margin:0 auto; padding:0 14px}
+.stage{
+  border:1px solid var(--line); border-radius:10px; overflow:hidden;
+  background:#080B10; position:relative;
+}
+#spec{display:block; width:100%; height:230px}
+.stage .cap{
+  position:absolute; top:8px; left:10px; font-size:10px; color:var(--dim);
+  letter-spacing:.12em; text-transform:uppercase;
+}
+.legend{
+  display:flex; gap:14px; flex-wrap:wrap; padding:10px 4px 0; font-size:11px; color:var(--dim);
+}
+.legend b{font-weight:500; color:var(--text)}
+.dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:baseline; transform:translateY(-.5px)}
+.dot.s{background:var(--seis)} .dot.w{background:var(--solar)} .dot.q{background:var(--quake)}
+section.src{
+  margin-top:14px; border:1px solid var(--line); border-radius:10px;
+  background:var(--panel); backdrop-filter:blur(4px); overflow:hidden;
+}
+.src h2{
+  font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  padding:12px 14px 10px; display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid var(--line);
+}
+.src h2 .st{margin-left:auto; font-weight:400; letter-spacing:.05em; font-size:10px; color:var(--dim)}
+.st.live{color:var(--good)} .st.err{color:var(--bad)}
+.src h2 a{color:var(--dim); text-decoration:none; font-weight:400; letter-spacing:0; font-size:10px}
+.maps{padding:6px 14px 12px}
+.map{
+  display:grid; grid-template-columns:minmax(0,1.1fr) 16px minmax(0,1fr) 54px;
+  align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed rgba(232,228,218,.05);
+  font-size:12px;
+}
+.map:last-child{border-bottom:none}
+.map .val{color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.map .val small{color:var(--dim); display:block; font-size:10px}
+.map .arrow{color:var(--dim); text-align:center}
+.map .dest{color:var(--dim); font-size:11px}
+.map .dest b{color:var(--text); font-weight:500}
+.meter{height:4px; border-radius:2px; background:rgba(232,228,218,.08); overflow:hidden}
+.meter i{display:block; height:100%; width:0%; border-radius:2px; transition:width .8s ease}
+.seisbar i{background:var(--seis)} .solarbar i{background:var(--solar)} .quakebar i{background:var(--quake)}
+#qlog{padding:4px 14px 12px; font-size:11px; color:var(--dim); max-height:130px; overflow-y:auto}
+#qlog .q{padding:4px 0; border-bottom:1px dashed rgba(232,228,218,.05); display:flex; gap:8px}
+#qlog .q:last-child{border-bottom:none}
+#qlog .q b{color:var(--quake); font-weight:500; flex:none}
+#qlog .q span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#qlog .q em{font-style:normal; color:var(--text); margin-left:auto; flex:none}
+footer{
+  max-width:760px; margin:26px auto 0; padding:0 18px; font-size:10px; color:var(--dim); line-height:1.7;
+}
+footer a{color:var(--dim)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>EARTH<em>SONG</em></h1>
+    <div class="sub">The planet and the sun, played live. Every sound below is a measurement.</div>
+  </div>
+  <button id="play" aria-label="Play Earthsong">
+    <span class="ring"></span>
+    <svg id="icoPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="icoStop" class="hidden" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+  </button>
+</header>
+
+<main>
+  <div class="stage">
+    <canvas id="spec"></canvas>
+    <div class="cap">Spectrogram · master output</div>
+  </div>
+  <div class="legend">
+    <span><span class="dot s"></span><b>Seismic</b> bass texture</span>
+    <span><span class="dot w"></span><b>Solar wind</b> drone + melody</span>
+    <span><span class="dot q"></span><b>Earthquakes</b> struck notes</span>
+  </div>
+
+  <section class="src" style="border-left:2px solid var(--seis)">
+    <h2 style="color:var(--seis)">Seismic · US.TZTN · Tazewell TN
+      <span class="st" id="stSeis">connecting…</span></h2>
+    <div class="maps">
+      <div class="map">
+        <div class="val" id="seisVal">ground motion, last hour<small id="seisWin">—</small></div>
+        <div class="arrow">→</div>
+        <div class="dest"><b>bass texture</b><br>audified ×100 speed</div>
+        <div class="meter seisbar"><i id="mSeis"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="src" style="border-left:2px solid var(--solar)">
+    <h2 style="color:var(--solar)">Solar wind · DSCOVR · L1 point
+      <span class="st" id="stSolar">connecting…</span></h2>
+    <div class="maps">
+      <div class="map">
+        <div class="val"><span id="vSpeed">—</span> km/s<small>bulk speed</small></div>
+        <div class="arrow">→</div>
+        <div class="dest"><b>melody rate</b> <span id="dRate">—</span></div>
+        <div class="meter solarbar"><i id="mSpeed"></i></div>
+      </div>
+      <div class="map">
+        <div class="val"><span id="vBz">—</span> nT<small>Bz (field north–south)</small></div>
+        <div class="arrow">→</div>
+        <div class="dest"><b>mode</b> <span id="dMode">—</span></div>
+        <div class="meter solarbar"><i id="mBz"></i></div>
+      </div>
+      <div class="map">
+        <div class="val"><span id="vDens">—</span> p/cm³<small>proton density</small></div>
+        <div class="arrow">→</div>
+        <div class="dest"><b>drone brightness</b></div>
+        <div class="meter solarbar"><i id="mDens"></i></div>
+      </div>
+      <div class="map">
+        <div class="val"><span id="vTemp">—</span> K<small>plasma temperature</small></div>
+        <div class="arrow">→</div>
+        <div class="dest"><b>high shimmer</b></div>
+        <div class="meter solarbar"><i id="mTemp"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="src" style="border-left:2px solid var(--quake)">
+    <h2 style="color:var(--quake)">Earthquakes · USGS · past hour, global
+      <span class="st" id="stQuake">connecting…</span></h2>
+    <div class="maps">
+      <div class="map">
+        <div class="val"><span id="vQn">0</span> events<small>magnitude → pitch · depth → reverb</small></div>
+        <div class="arrow">→</div>
+        <div class="dest"><b>struck notes</b><br>bigger = lower + louder</div>
+        <div class="meter quakebar"><i id="mQuake"></i></div>
+      </div>
+    </div>
+    <div id="qlog"></div>
+  </section>
+</main>
+
+<footer>
+  Sources: <a href="https://service.iris.edu/irisws/timeseries/1/">EarthScope/IRIS timeseries</a> (audified broadband waveform) ·
+  <a href="https://www.swpc.noaa.gov/">NOAA SWPC</a> real-time solar wind (plasma + magnetometer, 1-min cadence) ·
+  <a href="https://earthquake.usgs.gov/earthquakes/feed/">USGS</a> all-events GeoJSON.
+  Nothing here is composed. Solar wind Bz south of zero pulls the scale to minor pentatonic; north, major.
+  Seismic audio is the actual ground-motion waveform under southern Appalachia, resampled into hearing range and refreshed every five minutes.
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- state ---------- */
+var ctx=null, running=false;
+var master, comp, analyser, verb, verbGain;
+var seis={src:null,gain:null,filter:null,buf:null,timer:null};
+var drone={oscs:[],gains:[],filter:null,out:null,third:null,thirdGain:null,sixth:null,sixthGain:null};
+var shimmer={oscs:[],gain:null};
+var sw={speed:null,dens:null,temp:null,bz:null,ok:false};
+var arp={next:0,rate:1.4,dir:1,step:4,timer:null};
+var quakes={seen:{},count:0,pend:[]};
+var ticks=[]; // {hue} pending spectrogram tick marks
+
+var ROOT=293.665; // D4
+var PENTA_MIN=[0,3,5,7,10], PENTA_MAJ=[0,2,4,7,9];
+function scale(){ return (sw.bz!=null && sw.bz<0)?PENTA_MIN:PENTA_MAJ; }
+function noteFreq(deg,oct){ var s=scale(); var n=s[((deg%s.length)+s.length)%s.length]+12*oct;
+  return ROOT*Math.pow(2,n/12); }
+function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
+function lerp(v,a,b,x,y){return x+(y-x)*clamp((v-a)/(b-a),0,1)}
+function $(id){return document.getElementById(id)}
+function setStatus(id,txt,cls){var e=$(id);e.textContent=txt;e.className='st '+(cls||'')}
+
+/* ---------- audio graph ---------- */
+function buildGraph(){
+  var AC=window.AudioContext||window.webkitAudioContext;
+  ctx=new AC();
+  master=ctx.createGain(); master.gain.value=0.9;
+  comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-22; comp.knee.value=18; comp.ratio.value=5;
+  comp.attack.value=0.01; comp.release.value=0.3;
+  analyser=ctx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.6;
+  master.connect(comp); comp.connect(analyser); analyser.connect(ctx.destination);
+
+  // generated reverb impulse (2.8s exponential decay noise)
+  var len=Math.floor(ctx.sampleRate*2.8), ir=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(var c=0;c<2;c++){var d=ir.getChannelData(c);
+    for(var i=0;i<len;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6);}}
+  verb=ctx.createConvolver(); verb.buffer=ir;
+  verbGain=ctx.createGain(); verbGain.gain.value=0.35;
+  verb.connect(verbGain); verbGain.connect(master);
+
+  buildDrone(); buildShimmer(); buildSeisChain();
+}
+
+function buildDrone(){
+  drone.out=ctx.createGain(); drone.out.gain.value=0.0;
+  drone.filter=ctx.createBiquadFilter(); drone.filter.type='lowpass';
+  drone.filter.frequency.value=420; drone.filter.Q.value=0.6;
+  drone.filter.connect(drone.out); drone.out.connect(master);
+  drone.out.connect(verb);
+  // root D2, fifth A2, octave D3, slow-detuned pairs
+  var defs=[[ROOT/4,0.30],[ROOT/4*1.005,0.22],[ROOT/4*1.5,0.20],[ROOT/2,0.14]];
+  defs.forEach(function(d){
+    var o=ctx.createOscillator(); o.type='triangle'; o.frequency.value=d[0];
+    var g=ctx.createGain(); g.gain.value=d[1];
+    o.connect(g); g.connect(drone.filter); o.start();
+    drone.oscs.push(o); drone.gains.push(g);
+  });
+  // mode color tones: minor third (F2) vs major sixth (B2), crossfaded by Bz
+  drone.third=ctx.createOscillator(); drone.third.type='sine';
+  drone.third.frequency.value=ROOT/4*Math.pow(2,3/12);
+  drone.thirdGain=ctx.createGain(); drone.thirdGain.gain.value=0;
+  drone.third.connect(drone.thirdGain); drone.thirdGain.connect(drone.filter); drone.third.start();
+  drone.sixth=ctx.createOscillator(); drone.sixth.type='sine';
+  drone.sixth.frequency.value=ROOT/4*Math.pow(2,9/12);
+  drone.sixthGain=ctx.createGain(); drone.sixthGain.gain.value=0.1;
+  drone.sixth.connect(drone.sixthGain); drone.sixthGain.connect(drone.filter); drone.sixth.start();
+  drone.out.gain.setTargetAtTime(0.22, ctx.currentTime, 3);
+}
+
+function buildShimmer(){
+  shimmer.gain=ctx.createGain(); shimmer.gain.gain.value=0;
+  var lfo=ctx.createOscillator(); lfo.frequency.value=0.07;
+  var lfoG=ctx.createGain(); lfoG.gain.value=0.4;
+  lfo.connect(lfoG);
+  [ROOT*4, ROOT*4*1.5, ROOT*8].forEach(function(f,i){
+    var o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f*(1+0.0012*i);
+    var g=ctx.createGain(); g.gain.value=[0.5,0.3,0.15][i];
+    lfoG.connect(g.gain);
+    o.connect(g); g.connect(shimmer.gain); o.start();
+    shimmer.oscs.push(o);
+  });
+  lfo.start();
+  shimmer.gain.connect(master); shimmer.gain.connect(verb);
+}
+
+function buildSeisChain(){
+  seis.filter=ctx.createBiquadFilter(); seis.filter.type='lowpass';
+  seis.filter.frequency.value=380; seis.filter.Q.value=0.5;
+  seis.gain=ctx.createGain(); seis.gain.gain.value=0;
+  seis.filter.connect(seis.gain); seis.gain.connect(master);
+  var send=ctx.createGain(); send.gain.value=0.5;
+  seis.gain.connect(send); send.connect(verb);
+}
+
+/* ---------- seismic (IRIS audified waveform) ---------- */
+function irisURL(net,sta,loc,cha){
+  var end=new Date(Date.now()-15*60*1000);        // 15 min latency margin
+  var start=new Date(end.getTime()-60*60*1000);   // one hour window
+  function iso(d){return d.toISOString().slice(0,19)}
+  $('seisWin').textContent=iso(start).slice(11,16)+'–'+iso(end).slice(11,16)+' UTC';
+  return 'https://service.iris.edu/irisws/timeseries/1/query?net='+net+'&sta='+sta+
+    '&loc='+loc+'&cha='+cha+'&starttime='+iso(start)+'&endtime='+iso(end)+
+    '&output=audio&audiosamplerate=4000';
+}
+function fetchSeismic(){
+  var tries=[['US','TZTN','00','BHZ'],['IU','SSPA','00','BHZ']], k=0;
+  function attempt(){
+    if(k>=tries.length){ synthFallback(); return; }
+    var t=tries[k++];
+    fetch(irisURL(t[0],t[1],t[2],t[3]))
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(function(ab){ return ctx.decodeAudioData(ab); })
+      .then(function(buf){
+        seis.buf=buf; swapSeisSource(buf);
+        setStatus('stSeis','LIVE · '+t[0]+'.'+t[1],'live');
+        $('seisVal').firstChild.nodeValue = (t[1]==='TZTN'?'Clinch region ground motion':'ground motion ('+t[1]+')');
+        $('mSeis').style.width='85%';
+      })
+      .catch(function(){ attempt(); });
+  }
+  attempt();
+  clearTimeout(seis.timer);
+  seis.timer=setTimeout(fetchSeismic, 5*60*1000); // refresh window every 5 min
+}
+function synthFallback(){
+  // brown noise loop, clearly labeled — keeps the bed alive if IRIS is unreachable
+  var len=ctx.sampleRate*12, b=ctx.createBuffer(1,len,ctx.sampleRate), d=b.getChannelData(0), v=0;
+  for(var i=0;i<len;i++){ v=(v+(Math.random()*2-1)*0.02)*0.985; d[i]=v*3; }
+  swapSeisSource(b);
+  setStatus('stSeis','FALLBACK · synthetic','err');
+  $('mSeis').style.width='20%';
+}
+function swapSeisSource(buf){
+  var now=ctx.currentTime;
+  if(seis.src){
+    var oldEnv=seis.env, old=seis.src;
+    try{ oldEnv.gain.setTargetAtTime(0, now, 1.2); }catch(e){}
+    setTimeout(function(){ try{old.stop(); oldEnv.disconnect();}catch(e){} }, 5000);
+  }
+  var s=ctx.createBufferSource(); s.buffer=buf; s.loop=true;
+  var env=ctx.createGain(); env.gain.value=0;
+  s.connect(env); env.connect(seis.filter); s.start();
+  env.gain.setTargetAtTime(1.0, now+0.2, 2.5);
+  seis.src=s; seis.env=env;
+  seis.gain.gain.setTargetAtTime(0.5, now, 0.5);
+}
+
+/* ---------- solar wind (NOAA SWPC) ---------- */
+function lastRow(rows, idx){
+  for(var i=rows.length-1;i>=1;i--){
+    var v=parseFloat(rows[i][idx]);
+    if(!isNaN(v)) return {v:v, t:rows[i][0]};
+  } return null;
+}
+function fetchSolar(){
+  var base='https://services.swpc.noaa.gov/products/solar-wind/';
+  Promise.all([
+    fetch(base+'plasma-2-hour.json').then(function(r){return r.json()}),
+    fetch(base+'mag-2-hour.json').then(function(r){return r.json()})
+  ]).then(function(res){
+    var p=res[0], m=res[1];
+    var dens=lastRow(p,1), spd=lastRow(p,2), tmp=lastRow(p,3), bz=lastRow(m,3);
+    if(spd){sw.speed=spd.v} if(dens){sw.dens=dens.v}
+    if(tmp){sw.temp=tmp.v} if(bz){sw.bz=bz.v}
+    sw.ok=true;
+    setStatus('stSolar','LIVE · '+(spd?spd.t.slice(11,16)+' UTC':''),'live');
+    applySolar();
+  }).catch(function(){
+    setStatus('stSolar', sw.ok?'STALE · retrying':'ERROR · retrying','err');
+  });
+}
+function applySolar(){
+  var now=ctx?ctx.currentTime:0;
+  // speed 250–750 km/s → melody rate 0.7–3.2 notes/s
+  if(sw.speed!=null){
+    arp.rate=lerp(sw.speed,250,750,0.7,3.2);
+    $('vSpeed').textContent=Math.round(sw.speed);
+    $('dRate').textContent=arp.rate.toFixed(1)+' notes/s';
+    $('mSpeed').style.width=lerp(sw.speed,250,750,8,100).toFixed(0)+'%';
+  }
+  // Bz −10…+10 nT → minor↔major crossfade
+  if(sw.bz!=null){
+    var south=clamp(-sw.bz/6,0,1); // how minor
+    if(ctx){
+      drone.thirdGain.gain.setTargetAtTime(0.12*south, now, 4);
+      drone.sixthGain.gain.setTargetAtTime(0.12*(1-south), now, 4);
+    }
+    $('vBz').textContent=(sw.bz>0?'+':'')+sw.bz.toFixed(1);
+    $('dMode').textContent=sw.bz<0?'minor pentatonic':'major pentatonic';
+    $('mBz').style.width=lerp(Math.abs(sw.bz),0,10,10,100).toFixed(0)+'%';
+  }
+  // density 0.5–20 p/cm³ → drone filter 260–1100 Hz
+  if(sw.dens!=null){
+    if(ctx) drone.filter.frequency.setTargetAtTime(lerp(sw.dens,0.5,20,260,1100), now, 5);
+    $('vDens').textContent=sw.dens.toFixed(1);
+    $('mDens').style.width=lerp(sw.dens,0.5,20,8,100).toFixed(0)+'%';
+  }
+  // temperature 1e4–5e5 K → shimmer 0–0.05
+  if(sw.temp!=null){
+    if(ctx) shimmer.gain.gain.setTargetAtTime(lerp(sw.temp,1e4,5e5,0.004,0.05), now, 6);
+    $('vTemp').textContent=sw.temp>=1e5?(sw.temp/1e3).toFixed(0)+'k':Math.round(sw.temp);
+    $('mTemp').style.width=lerp(sw.temp,1e4,5e5,8,100).toFixed(0)+'%';
+  }
+}
+
+/* ---------- melody (solar-wind-clocked arpeggio) ---------- */
+function pluck(freq, gain, verbSend, dur, hue){
+  var t=ctx.currentTime;
+  var o=ctx.createOscillator(); o.type='triangle'; o.frequency.value=freq;
+  var o2=ctx.createOscillator(); o2.type='sine'; o2.frequency.value=freq*2;
+  var g=ctx.createGain(); g.gain.value=0;
+  var g2=ctx.createGain(); g2.gain.value=0.3;
+  var f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq*2; f.Q.value=0.8;
+  o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g);
+  g.connect(master);
+  var send=ctx.createGain(); send.gain.value=verbSend; g.connect(send); send.connect(verb);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(gain,t+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.start(t); o2.start(t); o.stop(t+dur+0.1); o2.stop(t+dur+0.1);
+  if(hue) ticks.push(hue);
+}
+function arpLoop(){
+  if(!running) return;
+  var t=ctx.currentTime;
+  while(arp.next<t+0.25){
+    // gentle random walk over degrees, two octaves up from root
+    if(Math.random()<0.28) arp.dir*=-1;
+    arp.step+=arp.dir*(Math.random()<0.75?1:2);
+    if(arp.step<0){arp.step=0;arp.dir=1} if(arp.step>9){arp.step=9;arp.dir=-1}
+    var oct=Math.floor(arp.step/5), deg=arp.step%5;
+    var f=noteFreq(deg,oct+0); // D4–D6 territory
+    if(Math.random()<0.82) pluck(f, 0.10+Math.random()*0.05, 0.35, 1.6, 'solar');
+    arp.next+=1/arp.rate*(Math.random()<0.15?2:1); // occasional rest
+  }
+  arp.timer=setTimeout(arpLoop,90);
+}
+
+/* ---------- earthquakes (USGS) ---------- */
+function quakeNote(mag, depth, place){
+  // magnitude 0–7 → two octaves descending below root, snapped to scale
+  var span=lerp(mag,0,7,14,0);            // scale-steps above floor
+  var step=Math.round(span), oct=Math.floor(step/5)-3, deg=step%5;
+  var f=noteFreq(deg,oct);                 // roughly D2–D4+
+  var g=lerp(mag,0,7,0.06,0.30);
+  var rv=lerp(depth||10,0,600,0.2,0.95);   // deeper = wetter
+  pluck(f,g,rv,3.5,'quake');
+  var log=$('qlog');
+  var row=document.createElement('div'); row.className='q';
+  row.innerHTML='<b>M'+mag.toFixed(1)+'</b><span>'+ (place||'—') +'</span><em>'+Math.round(depth||0)+' km</em>';
+  log.insertBefore(row,log.firstChild);
+  while(log.children.length>12) log.removeChild(log.lastChild);
+}
+function fetchQuakes(initial){
+  fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson')
+    .then(function(r){return r.json()})
+    .then(function(gj){
+      var feats=gj.features||[];
+      quakes.count=feats.length;
+      $('vQn').textContent=feats.length;
+      $('mQuake').style.width=clamp(feats.length*6,4,100)+'%';
+      setStatus('stQuake','LIVE · '+feats.length+' events','live');
+      var fresh=[];
+      feats.forEach(function(f){
+        if(!quakes.seen[f.id]){ quakes.seen[f.id]=1; fresh.push(f); }
+      });
+      // on first load, replay the five most recent softly, spaced out;
+      // afterwards, each new event strikes as it arrives
+      var play=initial?fresh.slice(0,5):fresh;
+      play.forEach(function(f,i){
+        setTimeout(function(){
+          if(!running) return;
+          var m=f.properties.mag||1, d=(f.geometry.coordinates||[0,0,10])[2];
+          quakeNote(initial?Math.min(m,3):m, d, f.properties.place);
+        }, (initial? i*4200 : i*1500)+400);
+      });
+    })
+    .catch(function(){ setStatus('stQuake','ERROR · retrying','err'); });
+}
+
+/* ---------- spectrogram ---------- */
+var cvs=$('spec'), g2d=cvs.getContext('2d'), freqData;
+function sizeCanvas(){
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var w=cvs.clientWidth, h=cvs.clientHeight;
+  if(cvs.width!==w*dpr){ cvs.width=w*dpr; cvs.height=h*dpr; g2d.scale(1,1);
+    g2d.fillStyle='#080B10'; g2d.fillRect(0,0,cvs.width,cvs.height); }
+}
+window.addEventListener('resize',sizeCanvas);
+function ramp(v){ // 0–255 → color: ink → deep blue → amber → warm white
+  var x=v/255;
+  var r=Math.round(lerp(x,0.15,1,10,255));
+  var gr=Math.round(x<0.5?lerp(x,0,0.5,11,80):lerp(x,0.5,1,80,210));
+  var b=Math.round(x<0.4?lerp(x,0,0.4,16,90):lerp(x,0.4,1,90,60));
+  return 'rgb('+r+','+gr+','+b+')';
+}
+function drawSpec(){
+  if(!running){ return; }
+  requestAnimationFrame(drawSpec);
+  sizeCanvas();
+  var W=cvs.width,H=cvs.height;
+  if(!freqData) freqData=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freqData);
+  g2d.drawImage(cvs,-2,0);                 // scroll left
+  g2d.fillStyle='#080B10'; g2d.fillRect(W-2,0,2,H);
+  var bins=Math.floor(freqData.length*0.35); // ~0–3.8 kHz, the musical band
+  for(var y=0;y<H;y++){
+    var frac=1-y/H;
+    var bi=Math.floor(Math.pow(frac,1.8)*bins); // sqrt-ish: low freqs get room
+    g2d.fillStyle=ramp(freqData[bi]);
+    g2d.fillRect(W-2,y,2,1);
+  }
+  // event ticks along the bottom edge
+  while(ticks.length){
+    var t=ticks.shift();
+    g2d.fillStyle=(t==='quake')?'#E27B86':'#86C7D8';
+    g2d.fillRect(W-3,H-6,3,6);
+  }
+}
+
+/* ---------- transport ---------- */
+var btn=$('play');
+btn.addEventListener('click',function(){
+  if(!ctx){
+    buildGraph();
+    fetchSeismic();
+    fetchSolar(); setInterval(fetchSolar,60*1000);
+    fetchQuakes(true); setInterval(function(){fetchQuakes(false)},60*1000);
+  }
+  if(!running){
+    ctx.resume().then(function(){
+      running=true;
+      btn.classList.add('on'); btn.setAttribute('aria-label','Stop');
+      $('icoPlay').classList.add('hidden'); $('icoStop').classList.remove('hidden');
+      arp.next=ctx.currentTime+0.5;
+      arpLoop(); drawSpec();
+    });
+  }else{
+    running=false;
+    clearTimeout(arp.timer);
+    ctx.suspend();
+    btn.classList.remove('on'); btn.setAttribute('aria-label','Play Earthsong');
+    $('icoStop').classList.add('hidden'); $('icoPlay').classList.remove('hidden');
+  }
+});
+sizeCanvas();
+})();
+</script>
+</body>
+</html>
