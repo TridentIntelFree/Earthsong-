@@ -2,502 +2,603 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>EARTHSONG — live geophysical audification</title>
+<title>EARTHSONG</title>
 <style>
-:root{
-  --bg:#0c0f13;
-  --panel:#12161d;
-  --line:#1f2630;
-  --ink:#cfd6de;
-  --dim:#6b7684;
-  --seis:#d99a4e;   /* earth ochre  */
-  --wind:#8fb8d8;   /* solar-wind pale blue */
-  --quake:#d96a5a;  /* ember */
-  --mode:#b8a6d9;   /* mode blend violet */
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--bg);color:var(--ink);
-  font-family:ui-monospace,"SF Mono",Menlo,monospace;
-  -webkit-font-smoothing:antialiased;overscroll-behavior:none}
-body{padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 14px)}
+  :root{
+    --bg:#14100c; --panel:#1d1712; --panel2:#241c14;
+    --ink:#d9a441; --ink-dim:#8a6f3a;
+    --live:#7c8f6e; --bone:#e8dfcf; --dim:#8a7b66;
+    --line:#332a1f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--bone);
+    font-family:ui-monospace,'SF Mono',Menlo,monospace;
+    padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 20px);
+    max-width:560px; margin:0 auto;
+    -webkit-user-select:none; user-select:none;
+    overscroll-behavior:none;
+  }
+  header{padding:22px 2px 14px; display:flex; align-items:baseline; justify-content:space-between}
+  h1{
+    font-family:ui-serif,'New York',Georgia,serif;
+    font-weight:600; font-size:26px; letter-spacing:.14em; color:var(--bone);
+  }
+  h1 span{color:var(--ink)}
+  #station{font-size:10px; color:var(--dim); letter-spacing:.08em; text-align:right; line-height:1.5}
+  #station b{color:var(--live); font-weight:400}
+  #station.sim b{color:#b0703c}
 
-header{display:flex;align-items:baseline;justify-content:space-between;padding:2px 2px 10px}
-h1{font-size:17px;font-weight:600;letter-spacing:.28em;color:var(--ink)}
-h1 span{color:var(--seis)}
-#clock{font-size:11px;color:var(--dim);letter-spacing:.08em}
+  /* seismogram drum */
+  #drum{
+    position:relative; background:var(--panel);
+    border:1px solid var(--line); border-radius:6px; overflow:hidden;
+  }
+  #wave{display:block; width:100%; height:170px}
+  #drumlabel{
+    position:absolute; top:6px; left:8px; font-size:9px; color:var(--dim); letter-spacing:.12em;
+  }
 
-.sub{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;padding:0 2px 10px}
+  /* observatory log readouts */
+  #log{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:6px;
+    overflow:hidden; margin-top:10px;
+  }
+  .cell{background:var(--panel); padding:9px 8px 8px; text-align:center}
+  .cell .k{font-size:8px; letter-spacing:.14em; color:var(--dim); display:block; margin-bottom:4px}
+  .cell .v{font-size:15px; color:var(--ink); font-variant-numeric:tabular-nums}
+  #chordV{font-family:ui-serif,'New York',Georgia,serif; font-size:17px}
 
-/* spectrogram */
-#specwrap{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#07090c}
-#spec{display:block;width:100%;height:150px}
-#speclabel{position:absolute;top:6px;left:8px;font-size:9px;letter-spacing:.18em;color:var(--dim)}
+  /* transport */
+  #startBtn{
+    width:100%; margin-top:14px; padding:17px;
+    background:var(--panel2); color:var(--ink);
+    border:1px solid var(--ink-dim); border-radius:6px;
+    font-family:inherit; font-size:14px; letter-spacing:.22em; cursor:pointer;
+  }
+  #startBtn.on{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  #startBtn:active{transform:translateY(1px)}
 
-/* mode blend bar */
-#modebar{margin:10px 0 0;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:8px 10px}
-#modebar .row{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.16em;color:var(--dim);margin-bottom:5px}
-#modetrack{position:relative;height:8px;border-radius:4px;
-  background:linear-gradient(90deg,#5a4a72,#2a3550 50%,#3d5a72)}
-#modedot{position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;
-  background:var(--mode);border:2px solid var(--bg);left:50%;transform:translateX(-50%);transition:left 1.2s linear}
+  /* voices */
+  #voices{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px}
+  .vt{
+    padding:11px 4px; background:var(--panel); border:1px solid var(--line);
+    border-radius:6px; color:var(--dim); font-family:inherit; font-size:10px;
+    letter-spacing:.12em; cursor:pointer;
+  }
+  .vt.on{color:var(--ink); border-color:var(--ink-dim); background:var(--panel2)}
 
-/* cards */
-#cards{display:grid;gap:10px;margin-top:10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
-.card h2{font-size:10px;font-weight:600;letter-spacing:.22em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-.card h2 .st{font-size:9px;letter-spacing:.1em;color:var(--dim);font-weight:400}
-.card.seis h2{color:var(--seis)} .card.wind h2{color:var(--wind)} .card.quake h2{color:var(--quake)}
-.kv{display:flex;justify-content:space-between;font-size:11px;padding:2.5px 0}
-.kv .k{color:var(--dim)}
-.kv .v{color:var(--ink);text-align:right}
-.map{font-size:9.5px;color:var(--dim);letter-spacing:.06em;padding:2px 0 4px;border-bottom:1px dashed var(--line);margin-bottom:5px}
-.map b{color:inherit;font-weight:400}
-.card.seis .map b{color:var(--seis)} .card.wind .map b{color:var(--wind)} .card.quake .map b{color:var(--quake)}
-.meter{height:5px;border-radius:3px;background:#0a0d11;margin:7px 0 2px;overflow:hidden}
-.meter i{display:block;height:100%;width:0%;border-radius:3px;transition:width .3s linear}
-.card.seis .meter i{background:var(--seis)}
-.card.wind .meter i{background:var(--wind)}
-.card.quake .meter i{background:var(--quake)}
-.err{color:#d96a5a;font-size:10px;padding-top:4px;display:none}
-
-/* footer controls */
-#foot{display:flex;gap:10px;align-items:center;margin-top:12px}
-#mute{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);color:var(--ink);
-  font:inherit;font-size:11px;letter-spacing:.14em;padding:9px 16px;border-radius:6px}
-#mute.off{color:var(--dim)}
-#vol{flex:1;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;background:#0a0d11}
-#vol::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--ink)}
-
-/* start overlay */
-#start{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:18px;z-index:10}
-#start h1{font-size:22px}
-#start p{font-size:11px;color:var(--dim);letter-spacing:.12em;text-align:center;line-height:1.8;max-width:300px}
-#gobtn{background:none;border:1px solid var(--seis);color:var(--seis);font:inherit;
-  font-size:13px;letter-spacing:.3em;padding:14px 34px;border-radius:6px}
-#gobtn:active{background:var(--seis);color:var(--bg)}
-
-@media(min-width:640px){#cards{grid-template-columns:repeat(3,1fr)}}
-@media(prefers-reduced-motion:reduce){#modedot{transition:none}}
+  /* volume */
+  #volrow{display:flex; align-items:center; gap:12px; margin-top:16px; padding:0 2px}
+  #volrow label{font-size:9px; letter-spacing:.14em; color:var(--dim)}
+  input[type=range]{
+    -webkit-appearance:none; flex:1; height:2px; background:var(--line); border-radius:2px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+    background:var(--panel2); border:1px solid var(--ink-dim);
+  }
+  footer{margin-top:18px; font-size:9px; color:var(--dim); letter-spacing:.06em; line-height:1.7; text-align:center}
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 </style>
 </head>
 <body>
 
-<div id="start">
-  <h1>EARTH<span>SONG</span></h1>
-  <p>LIVE AUDIFICATION OF THE PLANET<br><br>
-     seismic ground motion · solar wind · earthquakes<br>
-     every sound traces to a measurement</p>
-  <button id="gobtn">▶ &nbsp;LISTEN</button>
-</div>
-
 <header>
   <h1>EARTH<span>SONG</span></h1>
-  <div id="clock">--:--:-- UTC</div>
+  <div id="station"><b>·</b> CONNECTING<br>US.TZTN — TAZEWELL, TN</div>
 </header>
-<div class="sub">US.TZTN Tazewell TN · DSCOVR L1 · USGS global feed</div>
 
-<div id="specwrap">
-  <canvas id="spec" width="800" height="150"></canvas>
-  <div id="speclabel">MASTER OUTPUT · 0–8 kHz</div>
+<div id="drum">
+  <canvas id="wave"></canvas>
+  <div id="drumlabel">VERTICAL GROUND VELOCITY · BHZ 40 SPS</div>
 </div>
 
-<div id="modebar">
-  <div class="row"><span>MINOR PENTATONIC · Bz SOUTH</span><span>Bz NORTH · MAJOR PENTATONIC</span></div>
-  <div id="modetrack"><div id="modedot"></div></div>
+<div id="log">
+  <div class="cell"><span class="k">CHORD</span><span class="v" id="chordV">—</span></div>
+  <div class="cell"><span class="k">MODE</span><span class="v" id="modeV" style="font-size:11px;line-height:1.6">—</span></div>
+  <div class="cell"><span class="k">TEMPO</span><span class="v" id="tempoV">—</span></div>
+  <div class="cell"><span class="k">ENERGY</span><span class="v" id="rmsV">—</span></div>
 </div>
 
-<div id="cards">
+<button id="startBtn">▶&nbsp;&nbsp;BEGIN TRANSMISSION</button>
 
-  <div class="card seis">
-    <h2>SEISMIC <span class="st" id="s-st">idle</span></h2>
-    <div class="map">→ <b>bass texture</b> · raw waveform ×100 speedup</div>
-    <div class="kv"><span class="k">station</span><span class="v">US.TZTN BHZ</span></div>
-    <div class="kv"><span class="k">window</span><span class="v" id="s-win">—</span></div>
-    <div class="kv"><span class="k">next refresh</span><span class="v" id="s-next">—</span></div>
-    <div class="meter"><i id="s-meter"></i></div>
-    <div class="err" id="s-err"></div>
-  </div>
-
-  <div class="card wind">
-    <h2>SOLAR WIND <span class="st" id="w-st">idle</span></h2>
-    <div class="map">→ <b>melody rate</b> · <b>mode</b> · <b>drone filter</b> · <b>shimmer</b></div>
-    <div class="kv"><span class="k">speed → note rate</span><span class="v" id="w-speed">—</span></div>
-    <div class="kv"><span class="k">Bz → mode blend</span><span class="v" id="w-bz">—</span></div>
-    <div class="kv"><span class="k">density → brightness</span><span class="v" id="w-den">—</span></div>
-    <div class="kv"><span class="k">temp → shimmer</span><span class="v" id="w-temp">—</span></div>
-    <div class="meter"><i id="w-meter"></i></div>
-    <div class="err" id="w-err"></div>
-  </div>
-
-  <div class="card quake">
-    <h2>EARTHQUAKES <span class="st" id="q-st">idle</span></h2>
-    <div class="map">→ <b>plucks</b> · mag = pitch + loudness · depth = reverb</div>
-    <div class="kv"><span class="k">past hour</span><span class="v" id="q-count">—</span></div>
-    <div class="kv"><span class="k">last event</span><span class="v" id="q-last">—</span></div>
-    <div class="kv"><span class="k">last mag / depth</span><span class="v" id="q-mag">—</span></div>
-    <div class="meter"><i id="q-meter"></i></div>
-    <div class="err" id="q-err"></div>
-  </div>
-
+<div id="voices">
+  <button class="vt on" data-v="drone">DRONE</button>
+  <button class="vt on" data-v="pads">PADS</button>
+  <button class="vt on" data-v="melody">MELODY</button>
+  <button class="vt on" data-v="bells">BELLS</button>
+  <button class="vt on" data-v="pulse">PULSE</button>
+  <button class="vt on" data-v="texture">TEXTURE</button>
 </div>
 
-<div id="foot">
-  <button id="mute">SOUND ON</button>
-  <input id="vol" type="range" min="0" max="100" value="70">
+<div id="volrow">
+  <label>LEVEL</label>
+  <input type="range" id="vol" min="0" max="100" value="70">
 </div>
+
+<footer id="foot">One station. One stream. Every note derives from the ground beneath Tazewell.</footer>
 
 <script>
-"use strict";
+'use strict';
 /* ============================================================
-   EARTHSONG — live geophysical audification
-   seismic (IRIS, audified)  ·  solar wind (NOAA SWPC, sonified)
-   earthquakes (USGS, event-triggered)
-   All melodic material quantized to D pentatonic.
-============================================================ */
+   EARTHSONG v3 — single seismic source, complete musicality
+   Source: IRIS US.TZTN BHZ (vertical broadband, 40 sps)
+   All harmony, melody, rhythm, dynamics and timbre derive
+   deterministically from the fetched seismic buffer.
+   ============================================================ */
 
-const $ = id => document.getElementById(id);
-
-/* ---------- musical material ---------- */
-const D3 = 146.832;
-const MAJ = [0,2,4,7,9], MIN = [0,3,5,7,10];  // pentatonic degrees
-function scaleTable(deg){
-  const t=[];
-  for(let oct=0; oct<3; oct++)
-    for(const d of deg) t.push(D3 * Math.pow(2,(oct*12+d)/12));
-  return t;
-}
-const majTable = scaleTable(MAJ), minTable = scaleTable(MIN);
-
-/* ---------- audio graph ---------- */
-let ctx, master, analyser, wetBus, dryBus;
-let seisBus, droneMajGain, droneMinGain, droneFilter, shimmerGain;
-let running = false;
-
-function makeImpulse(seconds, decay){
-  const rate = ctx.sampleRate, len = rate*seconds;
-  const buf = ctx.createBuffer(2, len, rate);
-  for(let ch=0; ch<2; ch++){
-    const d = buf.getChannelData(ch);
-    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, decay);
-  }
-  return buf;
-}
-
-function buildGraph(){
-  ctx = new (window.AudioContext||window.webkitAudioContext)();
-  master = ctx.createGain(); master.gain.value = 0.7;
-  analyser = ctx.createAnalyser();
-  analyser.fftSize = 1024; analyser.smoothingTimeConstant = 0.75;
-  master.connect(analyser); analyser.connect(ctx.destination);
-
-  dryBus = ctx.createGain(); dryBus.connect(master);
-  const conv = ctx.createConvolver(); conv.buffer = makeImpulse(2.8, 3.5);
-  wetBus = ctx.createGain(); wetBus.gain.value = 0.9;
-  wetBus.connect(conv); conv.connect(master);
-
-  /* seismic bus — sources attach with their OWN envelope gains (crossfade fix) */
-  seisBus = ctx.createGain(); seisBus.gain.value = 0.55;
-  const seisLP = ctx.createBiquadFilter();
-  seisLP.type="lowpass"; seisLP.frequency.value = 900;
-  seisBus.connect(seisLP); seisLP.connect(dryBus);
-
-  /* drones: two chord layers crossfaded by Bz */
-  droneFilter = ctx.createBiquadFilter();
-  droneFilter.type="lowpass"; droneFilter.frequency.value=500; droneFilter.Q.value=0.8;
-  droneFilter.connect(dryBus);
-  const send = ctx.createGain(); send.gain.value=0.25;
-  droneFilter.connect(send); send.connect(wetBus);
-
-  droneMajGain = ctx.createGain(); droneMajGain.gain.value = 0.5;
-  droneMinGain = ctx.createGain(); droneMinGain.gain.value = 0.5;
-  droneMajGain.connect(droneFilter); droneMinGain.connect(droneFilter);
-
-  function chord(freqs, dest){
-    for(const f of freqs){
-      for(const det of [-4, 3]){
-        const o = ctx.createOscillator();
-        o.type = "sawtooth"; o.frequency.value = f; o.detune.value = det;
-        const g = ctx.createGain(); g.gain.value = 0.028;
-        o.connect(g); g.connect(dest); o.start();
-      }
-    }
-  }
-  chord([D3/2, D3, D3*Math.pow(2,9/12)], droneMajGain);            // D, D, B  (maj color)
-  chord([D3/2, D3, D3*Math.pow(2,10/12)], droneMinGain);           // D, D, C  (min color)
-
-  /* shimmer: filtered noise high band, gain from plasma temperature */
-  const nbuf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
-  const nd = nbuf.getChannelData(0);
-  for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
-  const noise = ctx.createBufferSource(); noise.buffer=nbuf; noise.loop=true;
-  const hp = ctx.createBiquadFilter(); hp.type="bandpass"; hp.frequency.value=5200; hp.Q.value=2.5;
-  shimmerGain = ctx.createGain(); shimmerGain.gain.value = 0.0;
-  noise.connect(hp); hp.connect(shimmerGain); shimmerGain.connect(wetBus);
-  noise.start();
-}
-
-/* ---------- state ---------- */
-const S = {
-  modeBlend: 0.5,        // 0 = minor (Bz south), 1 = major (Bz north)
-  noteRate: 1.2,         // notes/sec from wind speed
-  lastMelodyIdx: 7,
-  seenQuakes: new Set(),
-  quakeQueue: [],
-  seisSource: null, seisEnv: null,
+const CFG = {
+  net:'US', sta:'TZTN',
+  tries:[ {loc:'00',cha:'BHZ'}, {loc:'--',cha:'BHZ'}, {loc:'00',cha:'HHZ'}, {loc:'--',cha:'LHZ'} ],
+  windowSec: 600,          // seismic window length
+  latencySec: 1500,        // request data ending this far in the past (station latency margin)
+  musicMinutes: 6,         // one buffer traversal = 6 min of music
+  refetchMs: 6*60*1000
 };
 
-/* ---------- melody voice (constrained random walk in-scale) ---------- */
-function playNote(freq, vel, wet, dur){
-  const t = ctx.currentTime;
-  const o = ctx.createOscillator(); o.type="triangle"; o.frequency.value=freq;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vel, t+0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-  o.connect(g);
-  const d = ctx.createGain(); d.gain.value = 1-wet;
-  const w = ctx.createGain(); w.gain.value = wet;
-  g.connect(d); d.connect(dryBus);
-  g.connect(w); w.connect(wetBus);
-  o.start(t); o.stop(t+dur+0.1);
-}
+/* ---------- state ---------- */
+let ctx=null, master=null, comp=null, verb=null, verbGain=null, dly=null, dlyFb=null, dlyGain=null, dlyLP=null;
+let running=false, simulated=false;
+let buf=null;                 // Float32Array normalized (z-scored)
+let feat=null;                // feature frames
+let trans=[];                 // transient events [{f,mag}]
+let rng=null, seed=0;
+let pending=null;             // staged new data window
+let tempo=60, spb=1, s16=0.25;
+let stepIdx=0, nextT=0, barIdx=0;
+let rootPC=0, mode=null, modeName='—', degree=0, chordMidi=[], lastMelIdx=null, restRun=0;
+let padVoices=[], droneNodes=null, texNodes=null;
+let startClock=0;             // ctx.currentTime at start of current traversal
+let lastStrike=0;
+const V = {drone:true,pads:true,melody:true,bells:true,pulse:true,texture:true};
 
-function melodyTick(){
-  if(!running) return;
-  const table = Math.random() < S.modeBlend ? majTable : minTable;
-  let i = S.lastMelodyIdx + (Math.random()<0.5?-1:1)*(Math.random()<0.7?1:2);
-  i = Math.max(2, Math.min(table.length-1, i));
-  S.lastMelodyIdx = i;
-  playNote(table[i], 0.10, 0.55, 2.2);
-  setTimeout(melodyTick, 1000/S.noteRate * (0.8+Math.random()*0.4));
-}
+const MODES = [
+  {name:'LYDIAN',    s:[0,2,4,6,7,9,11]},
+  {name:'IONIAN',    s:[0,2,4,5,7,9,11]},
+  {name:'MIXOLYDIAN',s:[0,2,4,5,7,9,10]},
+  {name:'DORIAN',    s:[0,2,3,5,7,9,10]},
+  {name:'AEOLIAN',   s:[0,2,3,5,7,8,10]}
+];
+const PCN=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const DEG_T={0:[3,4,5,1],1:[4,3,6,0],2:[5,3,1,0],3:[4,0,1,5],4:[0,5,3,0],5:[3,1,4,2],6:[0,4,5,0]};
+const ROMAN=['I','ii','iii','IV','V','vi','vii°'];
 
-/* ---------- quake plucks ---------- */
-function quakePluck(mag, depth){
-  const table = S.modeBlend >= 0.5 ? majTable : minTable;
-  const m = Math.max(0, Math.min(8, mag));
-  const idx = Math.round((1 - m/8) * (table.length-1));      // big quake = low note
-  const vel = 0.06 + (m/8)*0.4;
-  const wet = Math.max(0.15, Math.min(0.95, depth/300));      // deep = wetter
-  playNote(table[idx], vel, wet, 3.5 + m*0.4);
-  specTick("quake");
-  const el = $("q-meter"); el.style.width = Math.min(100, m/8*100)+"%";
-  setTimeout(()=>{ el.style.width="0%"; }, 2500);
-}
+/* ---------- utilities ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashBuf(arr){let h=0x811c9dc5;for(let i=0;i<arr.length;i+=13){const q=(arr[i]*1000)|0;h^=q&0xff;h=Math.imul(h,0x01000193);h^=(q>>8)&0xff;h=Math.imul(h,0x01000193)}return h>>>0}
+const m2f=m=>440*Math.pow(2,(m-69)/12);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const now=()=>ctx.currentTime;
 
-/* ---------- IRIS seismic audification ---------- */
-const SEIS_REFRESH = 5*60*1000;
-let seisNextAt = 0;
-const LOCS = ["00","--","10"];
-
-async function fetchSeismic(){
-  $("s-st").textContent = "fetching";
-  const end = new Date(Date.now() - 10*60*1000);
-  const endISO = end.toISOString().slice(0,19);
-  const t0 = new Date(end.getTime()-3600*1000);
-  $("s-win").textContent = t0.toISOString().slice(11,16)+"–"+endISO.slice(11,16)+" UTC";
-  let buf = null, lastErr = null;
-  for(const loc of LOCS){
-    const url = "https://service.iris.edu/irisws/timeseries/1/query"
-      + "?net=US&sta=TZTN&loc="+loc+"&cha=BHZ"
-      + "&endtime="+endISO+"&duration=3600"
-      + "&output=audio&audiosamplerate=4000";
+/* ---------- data acquisition ---------- */
+function isoNoMs(d){return d.toISOString().slice(0,19)}
+async function fetchWindow(){
+  const end=new Date(Date.now()-CFG.latencySec*1000);
+  const start=new Date(end.getTime()-CFG.windowSec*1000);
+  for(const t of CFG.tries){
+    const url=`https://service.iris.edu/irisws/timeseries/1/query?net=${CFG.net}&sta=${CFG.sta}&loc=${t.loc}&cha=${t.cha}`+
+              `&starttime=${isoNoMs(start)}&endtime=${isoNoMs(end)}&format=ascii`;
     try{
-      const r = await fetch(url);
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      const ab = await r.arrayBuffer();
-      buf = await ctx.decodeAudioData(ab);
-      break;
-    }catch(e){ lastErr = e; }
+      const r=await fetch(url);
+      if(!r.ok) continue;
+      const txt=await r.text();
+      const vals=[], NUM=/^-?\d+\.?\d*(e[+-]?\d+)?$/i;
+      for(const line of txt.split('\n')){
+        for(const tok of line.trim().split(/[\s,]+/)){
+          if(NUM.test(tok)) vals.push(parseFloat(tok));
+        }
+      }
+      if(vals.length>500){ simulated=false; return Float32Array.from(vals); }
+    }catch(e){/* try next */}
   }
-  if(!buf){
-    $("s-st").textContent="error"; $("s-err").style.display="block";
-    $("s-err").textContent="IRIS fetch failed: "+lastErr;
+  simulated=true;
+  return simulate();
+}
+function simulate(){
+  // Ornstein-Uhlenbeck drift + microseism band + sparse transients
+  const n=24000, out=new Float32Array(n);
+  let x=0, r=mulberry32((Date.now()/60000)|0);
+  const mFreq=0.16+0.1*r(), mAmp=0.6+0.8*r();
+  for(let i=0;i<n;i++){
+    x+= -0.002*x + (r()-0.5)*0.22;
+    out[i]=x + mAmp*Math.sin(2*Math.PI*mFreq*i/40)*(0.7+0.3*Math.sin(i/3000));
+    if(r()<0.00012) out[i]+= (r()-0.5)*26;
+  }
+  return out;
+}
+function normalize(raw){
+  let m=0; for(let i=0;i<raw.length;i++)m+=raw[i]; m/=raw.length;
+  let s=0; for(let i=0;i<raw.length;i++){const d=raw[i]-m; s+=d*d}
+  s=Math.sqrt(s/raw.length)||1;
+  const z=new Float32Array(raw.length);
+  for(let i=0;i<raw.length;i++) z[i]=(raw[i]-m)/s;
+  return z;
+}
+
+/* ---------- feature extraction ---------- */
+function analyze(z){
+  const N=256, L=z.length, w=Math.floor(L/N);
+  const rms=new Float32Array(N), zcr=new Float32Array(N), bri=new Float32Array(N), slow=new Float32Array(N);
+  let lp=0;
+  for(let f=0;f<N;f++){
+    let e=0,zc=0,ad=0,aa=0;
+    const o=f*w;
+    for(let i=0;i<w;i++){
+      const v=z[o+i]; e+=v*v; aa+=Math.abs(v);
+      if(i>0){ if((v>=0)!==(z[o+i-1]>=0))zc++; ad+=Math.abs(v-z[o+i-1]); }
+      lp+= 0.0015*(v-lp);
+    }
+    rms[f]=Math.sqrt(e/w); zcr[f]=zc/w; bri[f]=aa>0?clamp(ad/aa,0,1.4):0; slow[f]=lp;
+  }
+  // rank-normalize rms → quantiles 0..1
+  const idx=[...rms.keys()].sort((a,b)=>rms[a]-rms[b]);
+  const rq=new Float32Array(N); idx.forEach((k,r)=>rq[k]=r/(N-1));
+  // transients: |z|>3.2σ, 200-sample refractory
+  const tr=[]; let last=-1e9;
+  for(let i=0;i<L;i++){const a=Math.abs(z[i]);
+    if(a>3.2 && i-last>200){ tr.push({f:i/L, mag:clamp((a-3.2)/5,0.08,1)}); last=i; }
+  }
+  let bAvg=0; for(let f=0;f<N;f++)bAvg+=bri[f]; bAvg/=N;
+  let rAvg=0; for(let f=0;f<N;f++)rAvg+=rq[f]; rAvg/=N;
+  return {rms,rq,zcr,bri,slow,bAvg,rAvg,N};
+}
+
+/* ---------- world building (deterministic from buffer) ---------- */
+function buildWorld(z){
+  buf=z; feat=analyze(z);
+  seed=hashBuf(z); rng=mulberry32(seed);
+  trans=feat.trans||[];
+  // recompute transients (analyze stored?) — analyze returns without tr; do here:
+  trans=[]; let last=-1e9;
+  for(let i=0;i<z.length;i++){const a=Math.abs(z[i]);
+    if(a>3.2 && i-last>200){ trans.push({f:i/z.length, mag:clamp((a-3.2)/5,0.08,1)}); last=i; }
+  }
+  rootPC=seed%12;
+  const q=feat.rAvg; // average energy quantile picks mode: calm→lydian, active→aeolian
+  mode=MODES[clamp(Math.floor(q*MODES.length),0,4)];
+  modeName=mode.name;
+  tempo=clamp(Math.round(52+feat.bAvg*30),50,80);
+  spb=60/tempo; s16=spb/4;
+  degree=0; buildChord();
+  document.getElementById('modeV').textContent=PCN[rootPC]+' '+modeName;
+  document.getElementById('tempoV').textContent=tempo;
+  drawWave();
+}
+function buildChord(){
+  const s=mode.s, d=degree;
+  const tone=k=>{const st=s[(d+k)%7]+12*Math.floor((d+k)/7);return st};
+  // root, 3rd, 5th, 7th, 9th — pads use 4, melody uses full scale
+  const base=48+rootPC; // around C3
+  chordMidi=[0,2,4,6].map(k=>{
+    let m=base+tone(k); while(m>72)m-=12; while(m<50)m+=12; return m;
+  });
+  document.getElementById('chordV').textContent=PCN[(rootPC+mode.s[degree])%12]+' '+ROMAN[degree];
+}
+function nextDegree(){
+  const opts=DEG_T[degree]||[0];
+  degree=opts[Math.floor(rng()*opts.length)];
+  buildChord();
+}
+
+/* ---------- audio graph ---------- */
+function initAudio(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  try{ ctx=new AC({latencyHint:'playback'}) }catch(e){ ctx=new AC() }
+  master=ctx.createGain(); master.gain.value=0.7;
+  comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-20; comp.knee.value=18; comp.ratio.value=3.5;
+  comp.attack.value=0.02; comp.release.value=0.3;
+  master.connect(comp).connect(ctx.destination);
+  // reverb — generated impulse, no external file
+  verb=ctx.createConvolver();
+  const len=Math.floor(ctx.sampleRate*2.8), ir=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6);
+  }
+  verb.buffer=ir;
+  verbGain=ctx.createGain(); verbGain.gain.value=0.42;
+  verb.connect(verbGain).connect(master);
+  // dotted-eighth delay with damped feedback
+  dly=ctx.createDelay(2); dly.delayTime.value=spb*0.75;
+  dlyFb=ctx.createGain(); dlyFb.gain.value=0.32;
+  dlyLP=ctx.createBiquadFilter(); dlyLP.type='lowpass'; dlyLP.frequency.value=2800;
+  dlyGain=ctx.createGain(); dlyGain.gain.value=0.5;
+  dly.connect(dlyLP).connect(dlyFb).connect(dly);
+  dly.connect(dlyGain).connect(master);
+  dly.connect(verb);
+}
+function send(node,dryLvl,verbLvl,dlyLvl){
+  const g=ctx.createGain(); g.gain.value=dryLvl; node.connect(g).connect(master);
+  if(verbLvl>0){const v=ctx.createGain(); v.gain.value=verbLvl; node.connect(v).connect(verb)}
+  if(dlyLvl>0){const dd=ctx.createGain(); dd.gain.value=dlyLvl; node.connect(dd).connect(dly)}
+}
+
+/* ---------- playhead: music time → buffer position ---------- */
+function playFrac(t){
+  const dur=CFG.musicMinutes*60;
+  return ((t-startClock)%dur)/dur;
+}
+function frameAt(f){ return clamp(Math.floor(f*feat.N),0,feat.N-1) }
+
+/* ---------- voices ---------- */
+function startDrone(){
+  const g1=ctx.createGain(), g2=ctx.createGain();
+  g1.gain.value=0; g2.gain.value=0;
+  const o1=ctx.createOscillator(); o1.type='sine'; o1.frequency.value=m2f(36+rootPC);
+  const o2=ctx.createOscillator(); o2.type='sine'; o2.frequency.value=m2f(36+rootPC)*1.002;
+  const o3=ctx.createOscillator(); o3.type='sine'; o3.frequency.value=m2f(43+rootPC); // fifth
+  o1.connect(g1); o2.connect(g1); o3.connect(g2);
+  send(g1,0.9,0.5,0); send(g2,0.35,0.4,0);
+  o1.start(); o2.start(); o3.start();
+  droneNodes={o1,o2,o3,g1,g2};
+}
+function updateDrone(t){
+  if(!droneNodes)return;
+  const f=frameAt(playFrac(t));
+  const lvl=V.drone? (0.10+0.10*feat.rq[f]) : 0;
+  droneNodes.g1.gain.setTargetAtTime(lvl, t, 1.2);
+  droneNodes.g2.gain.setTargetAtTime(lvl*0.5, t, 1.2);
+  const root=m2f(36+rootPC);
+  droneNodes.o1.frequency.setTargetAtTime(root,t,2);
+  droneNodes.o2.frequency.setTargetAtTime(root*1.002,t,2);
+  droneNodes.o3.frequency.setTargetAtTime(m2f(43+rootPC),t,2);
+}
+function changePads(t){
+  // release old
+  for(const v of padVoices){ v.g.gain.setTargetAtTime(0,t,1.4); v.stop=t+6 }
+  const old=padVoices.filter(v=>v.stop); padVoices=[];
+  setTimeout(()=>{ old.forEach(v=>{try{v.o1.stop();v.o2.stop();v.lfo.stop()}catch(e){}}) }, 8000);
+  if(!V.pads)return;
+  const f=frameAt(playFrac(t));
+  const cutoff=300+feat.bri[f]*1600;
+  const lvl=0.028+0.03*feat.rq[f];
+  chordMidi.forEach((m,i)=>{
+    const o1=ctx.createOscillator(), o2=ctx.createOscillator();
+    o1.type='sawtooth'; o2.type='sawtooth';
+    o1.frequency.value=m2f(m); o2.frequency.value=m2f(m);
+    o1.detune.value=-6-i; o2.detune.value=6+i;
+    const flt=ctx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=cutoff; flt.Q.value=0.7;
+    const lfo=ctx.createOscillator(); lfo.frequency.value=0.05+0.04*rng();
+    const lg=ctx.createGain(); lg.gain.value=cutoff*0.3;
+    lfo.connect(lg).connect(flt.frequency);
+    const g=ctx.createGain(); g.gain.value=0;
+    g.gain.setTargetAtTime(lvl, t, 2.2);
+    o1.connect(flt); o2.connect(flt); flt.connect(g);
+    send(g,0.8,0.45,0.12);
+    o1.start(t); o2.start(t); lfo.start(t);
+    padVoices.push({o1,o2,lfo,g});
+  });
+}
+function melodyNote(t,f){
+  const s=mode.s, scale=[];
+  for(let oct=0;oct<3;oct++) for(const st of s) scale.push(67+rootPC-7+st+12*oct);
+  const z=buf[clamp(Math.floor(f*buf.length),0,buf.length-1)];
+  let idx=Math.round(scale.length/2 + z*3.4);
+  if(lastMelIdx!==null) idx=clamp(idx, lastMelIdx-4, lastMelIdx+4);
+  idx=clamp(idx,0,scale.length-1); lastMelIdx=idx;
+  const m=scale[idx], fr=frameAt(f);
+  const o=ctx.createOscillator(); o.type='triangle';
+  o.frequency.setValueAtTime(m2f(m)*0.985,t);
+  o.frequency.exponentialRampToValueAtTime(m2f(m),t+0.05);
+  const g=ctx.createGain(); const pk=0.05+0.05*feat.rq[fr];
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(pk,t+0.04);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+ spb*(1.2+rng()));
+  o.connect(g); send(g,0.7,0.5,0.5);
+  o.start(t); o.stop(t+spb*3);
+}
+function bellStrike(t,mag){
+  // FM bell on a high chord tone, magnitude from the ground transient
+  const m=chordMidi[Math.floor(rng()*chordMidi.length)]+12+(rng()<0.4?12:0);
+  const fc=m2f(m);
+  const car=ctx.createOscillator(); car.frequency.value=fc;
+  const mod=ctx.createOscillator(); mod.frequency.value=fc*3.507;
+  const mg=ctx.createGain(); mg.gain.setValueAtTime(fc*1.8*mag,t);
+  mg.gain.exponentialRampToValueAtTime(0.5,t+2.2);
+  mod.connect(mg).connect(car.frequency);
+  const g=ctx.createGain(); const pk=0.05+0.11*mag;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(pk,t+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+2.6+2*mag);
+  car.connect(g); send(g,0.6,0.7,0.3);
+  car.start(t); mod.start(t); car.stop(t+5); mod.stop(t+5);
+  lastStrike=t;
+}
+function pulseHit(t,accent){
+  const o=ctx.createOscillator(); o.type='sine';
+  o.frequency.setValueAtTime(88,t);
+  o.frequency.exponentialRampToValueAtTime(46,t+0.11);
+  const g=ctx.createGain(); const pk=accent?0.16:0.10;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(pk,t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.20);
+  o.connect(g); send(g,0.9,0.12,0);
+  o.start(t); o.stop(t+0.3);
+}
+function startTexture(){
+  const n=ctx.createBufferSource();
+  const len=ctx.sampleRate*3, b=ctx.createBuffer(1,len,ctx.sampleRate);
+  const d=b.getChannelData(0); for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  n.buffer=b; n.loop=true;
+  const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1600; bp.Q.value=4;
+  const g=ctx.createGain(); g.gain.value=0;
+  n.connect(bp).connect(g); send(g,0.6,0.7,0);
+  n.start();
+  texNodes={n,bp,g};
+}
+function updateTexture(t){
+  if(!texNodes)return;
+  const f=frameAt(playFrac(t));
+  const lvl=V.texture? feat.bri[f]*0.028 : 0;
+  texNodes.g.gain.setTargetAtTime(lvl,t,1.5);
+  texNodes.bp.frequency.setTargetAtTime(900+feat.slow[f]*400+feat.zcr[f]*3000, t, 2);
+}
+
+/* ---------- scheduler ---------- */
+function scheduleStep(t){
+  const f=playFrac(t), fr=frameAt(f);
+
+  if(stepIdx%16===0){ // bar boundary
+    if(barIdx%2===0){ nextDegree(); changePads(t); }
+    if(barIdx%8===0 && pending){ applyPending(t); }
+    barIdx++;
+    updateDrone(t); updateTexture(t);
+    // intensity swell
+    master.gain.setTargetAtTime((vol.value/100)*(0.68+0.4*feat.rq[fr]), t, 1.5);
+    document.getElementById('rmsV').textContent=(feat.rq[fr]*100).toFixed(0)+'%';
+  }
+  // pulse: soft grounding thump when the Earth is energetic
+  if(V.pulse){
+    if(stepIdx%16===0 && feat.rq[fr]>0.5) pulseHit(t,false);
+    if(stepIdx%16===8 && feat.rq[fr]>0.8) pulseHit(t,true);
+  }
+  // melody on 8ths, density from zero-crossing rate
+  if(V.melody && stepIdx%2===0){
+    const p=clamp(0.15+feat.zcr[fr]*0.55,0.12,0.6);
+    if(rng()<p && restRun<1){ melodyNote(t,f); restRun=0 }
+    else restRun=Math.max(0,restRun-1);
+    if(rng()<0.12) restRun=2; // breathe
+  }
+  // bells fired by actual ground transients crossing the playhead
+  if(V.bells){
+    const fNext=playFrac(t+s16);
+    for(const tr of trans){
+      const hit = fNext>f ? (tr.f>=f && tr.f<fNext) : (tr.f>=f || tr.f<fNext);
+      if(hit) bellStrike(t + (tr.f-f)*CFG.musicMinutes*60*(fNext>f?1:0), tr.mag);
+    }
+  }
+  stepIdx++;
+}
+function tick(){
+  if(!running)return;
+  while(nextT < now()+0.12){ scheduleStep(nextT); nextT+=s16; }
+}
+function applyPending(t){
+  const z=pending; pending=null;
+  const wasTempo=tempo;
+  buildWorld(z);
+  startClock=t;             // restart traversal at the seam
+  stepIdx=0; barIdx=0; lastMelIdx=null;
+  spb=60/tempo; s16=spb/4;
+  dly.delayTime.setTargetAtTime(spb*0.75,t,2);
+  setStation();
+}
+
+/* ---------- visual ---------- */
+const cv=document.getElementById('wave');
+let W=0,H=0,px=1, waveCols=null;
+function sizeCanvas(){
+  px=window.devicePixelRatio||1;
+  W=cv.clientWidth; H=170;
+  cv.width=W*px; cv.height=H*px;
+  if(buf)drawColumns();
+}
+function drawColumns(){
+  const n=Math.floor(W), cols=new Float32Array(n*2), L=buf.length;
+  for(let x=0;x<n;x++){
+    const a=Math.floor(x/n*L), b=Math.floor((x+1)/n*L);
+    let mn=1e9,mx=-1e9;
+    for(let i=a;i<b;i++){ if(buf[i]<mn)mn=buf[i]; if(buf[i]>mx)mx=buf[i]; }
+    cols[x*2]=mn; cols[x*2+1]=mx;
+  }
+  waveCols=cols;
+}
+function drawWave(){ sizeCanvas(); }
+function render(){
+  requestAnimationFrame(render);
+  if(!waveCols)return;
+  const g=cv.getContext('2d');
+  g.setTransform(px,0,0,px,0,0);
+  g.fillStyle='#1d1712'; g.fillRect(0,0,W,H);
+  const mid=H/2, sc=H/9;
+  // transient tick marks
+  g.fillStyle='rgba(217,164,65,0.25)';
+  for(const tr of trans){ g.fillRect(tr.f*W-0.5,4,1,6); }
+  // waveform
+  g.strokeStyle='#d9a441'; g.globalAlpha=0.85; g.lineWidth=1;
+  g.beginPath();
+  for(let x=0;x<W;x++){
+    g.moveTo(x+0.5, mid-clamp(waveCols[x*2+1],-4.4,4.4)*sc);
+    g.lineTo(x+0.5, mid-clamp(waveCols[x*2],-4.4,4.4)*sc);
+  }
+  g.stroke(); g.globalAlpha=1;
+  if(running && ctx){
+    const f=playFrac(now());
+    // strike glow
+    const dt=now()-lastStrike;
+    if(dt<1.2){ g.fillStyle=`rgba(232,223,207,${0.16*(1-dt/1.2)})`; g.fillRect(0,0,W,H); }
+    g.strokeStyle='#e8dfcf'; g.lineWidth=1.5;
+    g.beginPath(); g.moveTo(f*W,0); g.lineTo(f*W,H); g.stroke();
+  }
+}
+
+/* ---------- station status ---------- */
+function setStation(){
+  const el=document.getElementById('station');
+  el.classList.toggle('sim',simulated);
+  el.innerHTML=simulated
+    ? '<b>●</b> SIMULATED — LINK DOWN<br>US.TZTN — TAZEWELL, TN'
+    : '<b>●</b> LIVE<br>US.TZTN — TAZEWELL, TN';
+}
+
+/* ---------- transport & iOS unlock ---------- */
+const vol=document.getElementById('vol');
+const silent=new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=');
+silent.loop=true;
+
+async function begin(){
+  const btn=document.getElementById('startBtn');
+  if(running){
+    running=false;
+    master.gain.setTargetAtTime(0, now(), 0.4);
+    btn.classList.remove('on'); btn.innerHTML='▶&nbsp;&nbsp;BEGIN TRANSMISSION';
     return;
   }
-  $("s-err").style.display="none";
-
-  /* normalize */
-  let peak = 0;
-  const ch = buf.getChannelData(0);
-  for(let i=0;i<ch.length;i+=13) peak = Math.max(peak, Math.abs(ch[i]));
-  const norm = peak > 0 ? Math.min(4, 0.8/peak) : 1;
-
-  /* crossfade: EACH source owns its envelope gain (the v1 bug fix) */
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const env = ctx.createGain(); env.gain.value = 0;
-  src.connect(env); env.connect(seisBus);
-  src.start();
-  const t = ctx.currentTime;
-  env.gain.linearRampToValueAtTime(norm, t+3);
-  if(S.seisSource){
-    const oldEnv = S.seisEnv, oldSrc = S.seisSource;
-    oldEnv.gain.setValueAtTime(oldEnv.gain.value, t);
-    oldEnv.gain.linearRampToValueAtTime(0, t+3);
-    setTimeout(()=>{ try{oldSrc.stop()}catch(e){} }, 3500);
-  }
-  S.seisSource = src; S.seisEnv = env;
-  $("s-st").textContent = "audifying ×100";
-  seisNextAt = Date.now() + SEIS_REFRESH;
-}
-
-/* ---------- NOAA SWPC solar wind ---------- */
-async function fetchWind(){
-  try{
-    const [pR, mR] = await Promise.all([
-      fetch("https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json"),
-      fetch("https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json")
-    ]);
-    const plasma = await pR.json(), mag = await mR.json();
-    let den=null, spd=null, tmp=null, bz=null;
-    for(let i=plasma.length-1;i>0;i--){
-      const r=plasma[i];
-      if(r[1]!=null&&r[2]!=null&&r[3]!=null){ den=+r[1]; spd=+r[2]; tmp=+r[3]; break; }
-    }
-    for(let i=mag.length-1;i>0;i--){
-      const r=mag[i];
-      if(r[3]!=null){ bz=+r[3]; break; }
-    }
-    if(spd==null||bz==null) throw new Error("no valid rows");
-    $("w-err").style.display="none";
-    $("w-st").textContent = "live · 60 s";
-
-    /* speed → melody rate 0.7–3.2 n/s over 250–750 km/s */
-    const sc = Math.max(0, Math.min(1,(spd-250)/500));
-    S.noteRate = 0.7 + sc*2.5;
-    $("w-speed").textContent = spd.toFixed(0)+" km/s → "+S.noteRate.toFixed(2)+" n/s";
-    $("w-meter").style.width = (sc*100)+"%";
-
-    /* Bz → mode blend, south = minor */
-    const blend = Math.max(0, Math.min(1,(bz+10)/20));
-    S.modeBlend = blend;
-    const t = ctx.currentTime;
-    droneMajGain.gain.linearRampToValueAtTime(0.15+0.85*blend, t+2);
-    droneMinGain.gain.linearRampToValueAtTime(0.15+0.85*(1-blend), t+2);
-    $("w-bz").textContent = bz.toFixed(1)+" nT → "+(blend>0.5?"major":"minor")+" "+Math.round(Math.abs(blend-0.5)*200)+"%";
-    $("modedot").style.left = (blend*100)+"%";
-
-    /* density → drone filter 200–2000 Hz (log) */
-    const dc = Math.max(0, Math.min(1, Math.log10(Math.max(0.5,den)/0.5)/Math.log10(40)));
-    droneFilter.frequency.linearRampToValueAtTime(200*Math.pow(10, dc), t+2);
-    $("w-den").textContent = den.toFixed(1)+" p/cm³ → "+(200*Math.pow(10,dc)).toFixed(0)+" Hz";
-
-    /* temperature → shimmer 0–0.12 (log 1e4–1e6) */
-    const tc = Math.max(0, Math.min(1,(Math.log10(Math.max(1e4,tmp))-4)/2));
-    shimmerGain.gain.linearRampToValueAtTime(tc*0.12, t+2);
-    $("w-temp").textContent = (tmp/1000).toFixed(0)+" kK → "+(tc*100).toFixed(0)+"%";
-  }catch(e){
-    $("w-st").textContent="error"; $("w-err").style.display="block";
-    $("w-err").textContent="SWPC: "+e;
-  }
-}
-
-/* ---------- USGS earthquakes ---------- */
-async function fetchQuakes(first){
-  try{
-    const r = await fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson");
-    const j = await r.json();
-    $("q-err").style.display="none";
-    $("q-st").textContent = "live · 60 s";
-    $("q-count").textContent = j.features.length + " events";
-    let delay = 0;
-    for(const f of j.features){
-      if(S.seenQuakes.has(f.id)) continue;
-      S.seenQuakes.add(f.id);
-      const mag = f.properties.mag ?? 1, depth = f.geometry.coordinates[2] ?? 10;
-      const place = f.properties.place || "unknown";
-      if(first && delay > 4000) continue;   // on first load only voice a few
-      setTimeout(()=>{
-        if(!running) return;
-        quakePluck(mag, depth);
-        $("q-last").textContent = place.length>26 ? place.slice(-26) : place;
-        $("q-mag").textContent = "M"+mag.toFixed(1)+" / "+depth.toFixed(0)+" km";
-      }, delay);
-      delay += 1400;
-    }
-    if(S.seenQuakes.size > 3000) S.seenQuakes.clear();
-  }catch(e){
-    $("q-st").textContent="error"; $("q-err").style.display="block";
-    $("q-err").textContent="USGS: "+e;
-  }
-}
-
-/* ---------- spectrogram ---------- */
-const spec = $("spec"), sctx = spec.getContext("2d");
-const freqData = new Uint8Array(512);
-let tickCol = null;
-function specTick(kind){ tickCol = kind; }
-
-function color(v){
-  /* dark → ochre → pale */
-  if(v<8) return "#07090c";
-  const t=v/255;
-  const r=Math.round(12+t*225), g=Math.round(15+t*160), b=Math.round(20+t*70);
-  return "rgb("+r+","+g+","+b+")";
-}
-function drawSpec(){
-  if(!running){ requestAnimationFrame(drawSpec); return; }
-  analyser.getByteFrequencyData(freqData);
-  sctx.drawImage(spec, -2, 0);
-  const W=spec.width, H=spec.height, bins=170;   // ~0–8 kHz at fftSize 1024
-  for(let y=0;y<H;y++){
-    const bin = Math.floor((1-y/H)*bins);
-    sctx.fillStyle = color(freqData[bin]);
-    sctx.fillRect(W-2, y, 2, 1);
-  }
-  if(tickCol){
-    sctx.fillStyle = tickCol==="quake" ? "#d96a5a" : "#8fb8d8";
-    sctx.fillRect(W-2, 0, 2, 10);
-    tickCol = null;
-  }
-  /* seismic level meter from low bins */
-  let lo=0; for(let i=2;i<20;i++) lo+=freqData[i];
-  $("s-meter").style.width = Math.min(100, lo/20/255*160)+"%";
-  requestAnimationFrame(drawSpec);
-}
-
-/* ---------- clocks & loops ---------- */
-setInterval(()=>{
-  $("clock").textContent = new Date().toISOString().slice(11,19)+" UTC";
-  if(seisNextAt){
-    const s = Math.max(0, Math.round((seisNextAt-Date.now())/1000));
-    $("s-next").textContent = Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
-  }
-},1000);
-
-/* ---------- controls ---------- */
-$("vol").addEventListener("input", e=>{
-  if(master) master.gain.linearRampToValueAtTime(e.target.value/100, ctx.currentTime+0.1);
-});
-$("mute").addEventListener("click", ()=>{
-  if(!ctx) return;
-  const b=$("mute");
-  if(b.classList.toggle("off")){
-    master.gain.linearRampToValueAtTime(0, ctx.currentTime+0.2);
-    b.textContent="MUTED";
-  }else{
-    master.gain.linearRampToValueAtTime($("vol").value/100, ctx.currentTime+0.2);
-    b.textContent="SOUND ON";
-  }
-});
-
-/* ---------- start (iOS audio unlock) ---------- */
-$("gobtn").addEventListener("click", async ()=>{
-  $("start").style.display="none";
-  buildGraph();
+  if(!ctx) initAudio();
   await ctx.resume();
-  running = true;
-  drawSpec();
-  melodyTick();
-  fetchSeismic();  setInterval(fetchSeismic, SEIS_REFRESH);
-  fetchWind();     setInterval(fetchWind, 60*1000);
-  fetchQuakes(true); setInterval(()=>fetchQuakes(false), 60*1000);
+  try{ silent.play().catch(()=>{}) }catch(e){}
+  btn.innerHTML='ACQUIRING SIGNAL…';
+  if(!buf){
+    const z=normalize(await fetchWindow());
+    buildWorld(z);
+    dly.delayTime.value=spb*0.75;
+    startDrone(); startTexture();
+    setStation();
+    setInterval(async()=>{
+      try{ pending=normalize(await fetchWindow()); }catch(e){}
+    }, CFG.refetchMs);
+  }
+  running=true;
+  startClock=now(); nextT=now()+0.1; stepIdx=0; barIdx=0; lastMelIdx=null;
+  master.gain.setTargetAtTime(vol.value/100, now(), 0.5);
+  btn.classList.add('on'); btn.innerHTML='◼&nbsp;&nbsp;TRANSMITTING';
+}
+
+document.getElementById('startBtn').addEventListener('click',begin);
+vol.addEventListener('input',()=>{ if(ctx&&running) master.gain.setTargetAtTime(vol.value/100, now(), 0.2) });
+document.querySelectorAll('.vt').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const k=b.dataset.v; V[k]=!V[k]; b.classList.toggle('on',V[k]);
+    if(ctx&&running){
+      if(k==='drone')updateDrone(now());
+      if(k==='texture')updateTexture(now());
+      if(k==='pads'&&!V.pads) for(const v of padVoices)v.g.gain.setTargetAtTime(0,now(),0.8);
+      if(k==='pads'&&V.pads) changePads(now());
+    }
+  });
 });
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && ctx && running){ ctx.resume(); nextT=now()+0.1; }
+});
+window.addEventListener('resize',sizeCanvas);
+setInterval(tick,25);
+sizeCanvas(); render();
 </script>
 </body>
 </html>
